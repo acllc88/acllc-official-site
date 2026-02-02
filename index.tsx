@@ -7,6 +7,7 @@ type View = 'home' | 'privacy' | 'terms' | 'process';
 
 // --- Global Constants ---
 const CONTACT_WHATSAPP = "212638426738";
+const DEFAULT_CONTACT_MESSAGE = encodeURIComponent("Hello ACLLC, I'd like to discuss a potential project and get a consultation with a designer.");
 
 // --- Data ---
 const serviceCategories = [
@@ -20,18 +21,6 @@ const serviceCategories = [
       { title: "Landing Pages", price: "100-200", features: ["Simple Conversions", "Animated Sale Pages ($200-$400)", "High-Converting Sales ($400-$800)"] },
       { title: "E-commerce Store", price: "500-1000", features: ["Small Store (1-20 products)", "Medium (20-100 products)", "Large Enterprise (100+ products)"] },
       { title: "Website Redesign", price: "200-500", features: ["Minor Updates & UI Fixes", "Full Redesign ($500-$2k)", "Complete Overhaul ($2k-$4k+)"] }
-    ]
-  },
-  {
-    category: "Search Engine Optimization",
-    subtitle: "Dominate search results, drive organic traffic, and grow your business.",
-    services: [
-      { title: "SEO Audit & Strategy", price: "100-200", features: ["Comprehensive Site Crawl", "Keyword Gap Analysis", "Competitor Research", "Actionable Strategy Roadmap"] },
-      { title: "On-Page SEO", price: "250-500", highlight: true, features: ["Meta Tags & Titles", "Content Optimization", "Internal Linking Structure", "UX & Conversion Flow"] },
-      { title: "Technical SEO Fixes", price: "400-800", features: ["Schema Markup Setup", "Core Web Vitals Fixes", "XML Sitemaps & Robots.txt", "Duplicate Content Removal"] },
-      { title: "Local SEO Ranking", price: "200-400", features: ["Google Business Profile", "Local Map Pack Ranking", "Regional Citations", "Review Management"] },
-      { title: "SEO Monthly Growth", price: "500-1500", customSubtitle: "/Monthly", features: ["Ongoing Keyword Ranking", "Backlink Strategy", "Monthly Performance Reports", "Priority Support"] },
-      { title: "E-commerce SEO", price: "800-2000", features: ["Product Description SEO", "Category Page Ranking", "Merchant Center Sync", "Review Optimization"] }
     ]
   },
   {
@@ -60,6 +49,7 @@ const serviceCategories = [
     services: [
       { title: "Flyers & Brochures", price: "50-100", features: ["Single-page flyers", "Bi-fold & Tri-fold options", "Multi-page booklets"] },
       { title: "Social Media Graphics", price: "150-300", highlight: true, features: ["Pack of 10-30 posts", "Monthly Management available", "Single post options from $20"] },
+      { title: "SEO Optimization", price: "150-300", features: ["Basic on-page SEO setup", "Full SEO strategy ($300-$600)", "Monthly SEO Package ($200-$500/mo)"] },
       { title: "Infographics", price: "100-200", features: ["Simple data visual", "Complex Detailed Tier", "Animated Infographics ($400-$800)"] },
       { title: "E-book Design", price: "150-300", features: ["Simple (10-15 pages)", "Standard (20-30 pages) $300-$500", "Premium (40+ pages) $500-$1k"] },
       { title: "Thumbnails", price: "15-30", features: ["Single high-quality thumbnail", "Pack of 5 ($60-$120)", "Pack of 10 ($100-$200)", "Monthly package ($150-$400)"] }
@@ -110,11 +100,27 @@ const Header = ({ setView }: { setView: (v: View) => void }) => (
   <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-[#f0f2f4]">
     <div className="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-10 py-3 md:py-4">
       <div 
-        className="flex items-center gap-2 md:gap-3 text-[#111318] cursor-pointer mx-auto transition-opacity hover:opacity-80"
+        className="flex items-center gap-2 md:gap-3 text-[#111318] cursor-pointer transition-opacity hover:opacity-80"
         onClick={() => setView('home')}
       >
         <Logo />
         <h2 className="text-[#111318] text-base md:text-xl font-black tracking-tight">ACLLC</h2>
+      </div>
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={() => setView('process')}
+          className="hidden md:block text-sm font-bold text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          Our Process
+        </button>
+        <a 
+          href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-[#111318] text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-black hover:bg-blue-600 transition-all shadow-lg"
+        >
+          Contact Us
+        </a>
       </div>
     </div>
   </header>
@@ -147,7 +153,7 @@ const Hero = ({ setView }: { setView: (v: View) => void }) => (
             Our Process
           </button>
           <a 
-            href={`https://wa.me/${CONTACT_WHATSAPP}`}
+            href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
             target="_blank"
             rel="noopener noreferrer"
             className="h-14 md:h-16 px-8 md:px-12 bg-white/5 hover:bg-white/10 backdrop-blur-md text-white font-black rounded-xl md:rounded-2xl border border-white/10 transition-all flex items-center justify-center text-base md:text-lg"
@@ -254,7 +260,7 @@ const Pricing = () => {
             <div className="relative group">
               <input 
                 type="text" 
-                placeholder="Search for a service (e.g. Logo, App, Maintenance, SEO...)"
+                placeholder="Search for a service (e.g. Logo, App, Maintenance...)"
                 className="w-full h-14 md:h-16 pl-14 pr-6 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm md:text-base text-[#111318] placeholder-gray-400"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -397,7 +403,7 @@ const Pricing = () => {
           <div className="w-full lg:w-1/3 flex flex-col gap-4 md:gap-6 text-center lg:text-left pt-6 lg:pt-0 border-t lg:border-t-0 border-gray-100">
              <p className="text-gray-500 font-medium text-xs md:text-sm">Need a custom quote for a complex project? Our consultants are available 24/7 via WhatsApp.</p>
              <a 
-                href={`https://wa.me/${CONTACT_WHATSAPP}`}
+                href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-14 px-8 bg-[#111318] text-white font-black rounded-xl md:rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg text-sm md:text-base"
@@ -439,8 +445,8 @@ const Testimonials = () => (
   </section>
 );
 
-const ProcessPage = () => (
-  <section className="px-4 md:px-6 py-12 md:py-24 bg-white min-h-[70vh] flex justify-center">
+const ProcessPage = ({ handleViewChange }: { handleViewChange: (v: View) => void }) => (
+  <section className="px-4 md:px-6 py-12 md:py-24 bg-white min-h-[70vh] flex flex-col items-center">
     <div className="max-w-5xl w-full">
       <div className="text-center mb-12 md:mb-20 flex flex-col gap-3 md:gap-4">
         <span className="text-blue-600 font-bold text-[10px] md:text-sm uppercase tracking-[0.3em]">Execution</span>
@@ -448,7 +454,7 @@ const ProcessPage = () => (
         <p className="text-gray-500 text-sm md:text-lg max-w-2xl mx-auto px-4">From initial concept to global launch, we follow a rigorous process to ensure your brand's success.</p>
       </div>
       
-      <div className="relative space-y-16 md:space-y-0">
+      <div className="relative space-y-16 md:space-y-0 mb-20 md:mb-32">
         <div className="absolute left-[31px] md:left-1/2 top-0 bottom-0 w-px bg-gray-200 hidden sm:block" />
         
         {[
@@ -471,6 +477,27 @@ const ProcessPage = () => (
             <div className="hidden md:block w-1/2" />
           </div>
         ))}
+      </div>
+
+      <div className="bg-gray-50 rounded-3xl md:rounded-[3rem] p-8 md:p-16 text-center border border-gray-100 flex flex-col items-center gap-6">
+        <h2 className="text-2xl md:text-4xl font-black text-[#111318]">Ready to start your journey?</h2>
+        <p className="text-gray-500 text-sm md:text-lg max-w-xl">Join hundreds of successful brands and experience our expert process firsthand.</p>
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+           <a 
+              href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-14 px-10 bg-blue-600 text-white font-black rounded-2xl flex items-center justify-center hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20"
+           >
+             Contact Us Now
+           </a>
+           <button 
+              onClick={() => handleViewChange('home')}
+              className="h-14 px-10 bg-white border border-gray-200 text-[#111318] font-black rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all"
+           >
+             Back to Home
+           </button>
+        </div>
       </div>
     </div>
   </section>
@@ -570,7 +597,7 @@ const Footer = ({ setView }: { setView: (v: View) => void }) => {
             <ul className="flex flex-col items-center sm:items-start gap-3 md:gap-4">
               <li><button onClick={() => setView('home')} className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Services</button></li>
               <li><button onClick={() => setView('process')} className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Our Process</button></li>
-              <li><a href={`https://wa.me/${CONTACT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Contact Us</a></li>
+              <li><a href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Contact Us</a></li>
             </ul>
           </div>
 
@@ -648,7 +675,7 @@ const App = () => {
       case 'terms':
         return <TermsPage />;
       case 'process':
-        return <ProcessPage />;
+        return <ProcessPage handleViewChange={handleViewChange} />;
       default:
         return (
           <>
