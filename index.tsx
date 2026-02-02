@@ -1,11 +1,83 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // --- Types ---
 type View = 'home' | 'privacy' | 'terms' | 'process';
 
+// --- Global Constants ---
+const CONTACT_WHATSAPP = "212638426738";
+
 // --- Data ---
+const serviceCategories = [
+  {
+    category: "Website Development",
+    subtitle: "Scalable, responsive, and conversion-optimized web platforms.",
+    services: [
+      { title: "Basic Web (3-5pg)", price: "300-500", features: ["Custom Starter Design", "Essential Mid-Range", "Premium Experience Options"] },
+      { title: "Standard Web (6-10pg)", price: "500-800", highlight: true, features: ["Professional Mid-Range ($800-$1.5k)", "High-End Premium ($1.5k-$3k)", "SEO & Speed Ready"] },
+      { title: "Advanced Web (10+pg)", price: "1000-1500", features: ["Enterprise Solutions", "Advanced Integrations", "Custom Logic & UI"] },
+      { title: "Landing Pages", price: "100-200", features: ["Simple Conversions", "Animated Sale Pages ($200-$400)", "High-Converting Sales ($400-$800)"] },
+      { title: "E-commerce Store", price: "500-1000", features: ["Small Store (1-20 products)", "Medium (20-100 products)", "Large Enterprise (100+ products)"] },
+      { title: "Website Redesign", price: "200-500", features: ["Minor Updates & UI Fixes", "Full Redesign ($500-$2k)", "Complete Overhaul ($2k-$4k+)"] }
+    ]
+  },
+  {
+    category: "Search Engine Optimization",
+    subtitle: "Dominate search results, drive organic traffic, and grow your business.",
+    services: [
+      { title: "SEO Audit & Strategy", price: "100-200", features: ["Comprehensive Site Crawl", "Keyword Gap Analysis", "Competitor Research", "Actionable Strategy Roadmap"] },
+      { title: "On-Page SEO", price: "250-500", highlight: true, features: ["Meta Tags & Titles", "Content Optimization", "Internal Linking Structure", "UX & Conversion Flow"] },
+      { title: "Technical SEO Fixes", price: "400-800", features: ["Schema Markup Setup", "Core Web Vitals Fixes", "XML Sitemaps & Robots.txt", "Duplicate Content Removal"] },
+      { title: "Local SEO Ranking", price: "200-400", features: ["Google Business Profile", "Local Map Pack Ranking", "Regional Citations", "Review Management"] },
+      { title: "SEO Monthly Growth", price: "500-1500", customSubtitle: "/Monthly", features: ["Ongoing Keyword Ranking", "Backlink Strategy", "Monthly Performance Reports", "Priority Support"] },
+      { title: "E-commerce SEO", price: "800-2000", features: ["Product Description SEO", "Category Page Ranking", "Merchant Center Sync", "Review Optimization"] }
+    ]
+  },
+  {
+    category: "Performance & Care",
+    subtitle: "Keep your site fast, secure, and always online.",
+    services: [
+      { title: "Website Maintenance", price: "50-100", customSubtitle: "/Monthly", features: ["Basic Package: Updates & Backups", "Standard: Security + Edits ($100-$200)", "Premium: Priority Support ($200-$400)"] },
+      { title: "Speed Optimization", price: "100-200", highlight: true, features: ["Basic: Quick Wins & Caching", "Advanced: Core Web Vitals ($200-$400)", "Full Performance Audit ($400-$700)"] },
+      { title: "Security Hardening", price: "150-300", features: ["SSL & Firewall Setup", "Malware Scanning & Removal", "Security Audit & Best Practices"] }
+    ]
+  },
+  {
+    category: "Branding & Identity",
+    subtitle: "We define the visual essence and soul of your brand.",
+    services: [
+      { title: "Logo Design", price: "100-200", features: ["Basic concepts (2-3)", "Professional Tier ($200-$500)", "Premium Unlimited ($500-$1k)"] },
+      { title: "Brand Identity", price: "300-500", highlight: true, features: ["Starter Kit (Colors/Fonts)", "Standard Kit (+Patterns)", "Complete Brand System ($1k-$2.5k)"] },
+      { title: "Brand Guidelines", price: "200-400", features: ["Basic (5-10pg)", "Standard (15-25pg)", "Comprehensive 30+pg ($800-$1.5k)"] },
+      { title: "Business Cards", price: "50-80", features: ["Single-sided design", "Double-sided premium", "Special Finishes available"] },
+      { title: "Stationery Set", price: "150-300", features: ["Letterhead & Envelope", "Full Stationery Package", "Corporate Bundle ($300-$600)"] }
+    ]
+  },
+  {
+    category: "Marketing & Digital",
+    subtitle: "Strategic assets to drive engagement and visual impact.",
+    services: [
+      { title: "Flyers & Brochures", price: "50-100", features: ["Single-page flyers", "Bi-fold & Tri-fold options", "Multi-page booklets"] },
+      { title: "Social Media Graphics", price: "150-300", highlight: true, features: ["Pack of 10-30 posts", "Monthly Management available", "Single post options from $20"] },
+      { title: "Infographics", price: "100-200", features: ["Simple data visual", "Complex Detailed Tier", "Animated Infographics ($400-$800)"] },
+      { title: "E-book Design", price: "150-300", features: ["Simple (10-15 pages)", "Standard (20-30 pages) $300-$500", "Premium (40+ pages) $500-$1k"] },
+      { title: "Thumbnails", price: "15-30", features: ["Single high-quality thumbnail", "Pack of 5 ($60-$120)", "Pack of 10 ($100-$200)", "Monthly package ($150-$400)"] }
+    ]
+  },
+  {
+    category: "App Development",
+    subtitle: "High-performance mobile experiences for iOS and Android.",
+    services: [
+      { title: "App UI/UX Design", price: "500-1000", features: ["5-10 simple screens", "Medium (15-25 screens)", "Complex (30+ screens) Tier"] },
+      { title: "iOS/Android Build", price: "2000-5000", highlight: true, features: ["Simple native build", "Medium complexity ($5k-$15k)", "Enterprise Feature-rich ($15k+)"] },
+      { title: "Cross-Platform", price: "3000-7000", features: ["React Native / Flutter", "One codebase, dual OS", "Advanced Scaling available"] },
+      { title: "App Maintenance", price: "200-500", customSubtitle: "/Monthly", features: ["Bug fixes & updates", "Feature updates package", "Priority technical support"] },
+      { title: "App Store Assets", price: "50-150", features: ["App Icon & Feature graphic", "Screenshot set (5)", "Full ASO Package ($250-$500)"] }
+    ]
+  }
+];
+
 const testimonials = [
   {
     quote: "ACLLC completely redefined our digital presence. Their attention to detail in the UI/UX phase was beyond anything we've experienced with larger agencies.",
@@ -75,7 +147,7 @@ const Hero = ({ setView }: { setView: (v: View) => void }) => (
             Our Process
           </button>
           <a 
-            href="https://wa.me/212617863598"
+            href={`https://wa.me/${CONTACT_WHATSAPP}`}
             target="_blank"
             rel="noopener noreferrer"
             className="h-14 md:h-16 px-8 md:px-12 bg-white/5 hover:bg-white/10 backdrop-blur-md text-white font-black rounded-xl md:rounded-2xl border border-white/10 transition-all flex items-center justify-center text-base md:text-lg"
@@ -103,9 +175,8 @@ const Hero = ({ setView }: { setView: (v: View) => void }) => (
 );
 
 const PricingCard = ({ title, price, features, highlight = false, subtitle = "" }: any) => {
-  const whatsappNumber = "212617863598";
   const message = encodeURIComponent(`Hello ACLLC, I'm interested in the ${title} service. I'd like to get started!`);
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+  const whatsappUrl = `https://wa.me/${CONTACT_WHATSAPP}?text=${message}`;
 
   return (
     <div className={`flex flex-col gap-5 md:gap-6 rounded-3xl md:rounded-[2rem] border border-solid p-6 md:p-8 transition-all hover:shadow-2xl hover:-translate-y-1 ${highlight ? 'border-blue-500 bg-blue-50/10' : 'border-[#dbdfe6] bg-white'}`}>
@@ -147,163 +218,198 @@ const SectionHeader = ({ title, subtitle }: { title: string, subtitle?: string }
   </div>
 );
 
-const Pricing = () => (
-  <section id="pricing" className="px-4 md:px-6 py-12 md:py-24 bg-gray-50 flex justify-center overflow-hidden">
-    <div className="max-w-7xl w-full">
-      <div className="text-center mb-10 md:mb-16 flex flex-col items-center gap-3 md:gap-4">
-        <span className="text-blue-600 font-bold text-[10px] md:text-sm uppercase tracking-[0.2em]">Service Catalog</span>
-        <h2 className="text-[#111318] text-3xl md:text-6xl font-black leading-tight tracking-tight px-4">Transparent Pricing</h2>
-        <p className="text-gray-500 text-sm md:text-lg max-w-xl px-6">World-class design and development services tailored to your budget and ambition.</p>
-        
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm mt-6 md:mt-8">
-          <span className="text-[9px] md:text-xs text-gray-400 font-bold uppercase tracking-widest">Global Secure Checkout via Stripe Integration</span>
-        </div>
-      </div>
+const Pricing = () => {
+  const [searchQuery, setSearchQuery] = useState('');
 
-      <SectionHeader title="Recommended Bundles" subtitle="Best value for startups and established brands alike." />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16 md:mb-24">
-        <div className="bg-[#111318] text-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border border-blue-900/50 shadow-2xl transform hover:scale-[1.02] transition-all">
-          <span className="text-blue-500 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Web Focus</span>
-          <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight">Starter Business</h4>
-          <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6">$599</span>
-          <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
-            {["5-page custom website", "Mobile responsive", "Basic SEO setup", "Contact form", "1 month support"].map((item, i) => (
-              <li key={i} className="text-[11px] md:text-xs font-medium text-gray-400 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" /> {item}
-              </li>
-            ))}
-          </ul>
-          <a href="https://wa.me/212617863598?text=I'm%20interested%20in%20the%20$599%20Starter%20Business%20Package" className="w-full py-3 bg-blue-600 text-center rounded-xl font-bold text-xs md:text-sm hover:bg-blue-700 transition-colors">Select Bundle</a>
-        </div>
-        
-        <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border border-gray-200 shadow-xl group hover:border-blue-500 transition-all">
-          <span className="text-blue-600 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Brand Launch</span>
-          <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight text-[#111318]">Business Starter</h4>
-          <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6 text-[#111318]">$499</span>
-          <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
-            {["Logo design", "Business card", "Letterhead", "Social media kit (5 templates)"].map((item, i) => (
-              <li key={i} className="text-[11px] md:text-xs font-medium text-gray-600 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" /> {item}
-              </li>
-            ))}
-          </ul>
-          <a href="https://wa.me/212617863598?text=I'm%20interested%20in%20the%20$499%20Business%20Starter%20Bundle" className="w-full py-3 bg-gray-100 text-center rounded-xl font-bold text-xs md:text-sm text-[#111318] group-hover:bg-blue-600 group-hover:text-white transition-all">Select Bundle</a>
-        </div>
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return serviceCategories;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return serviceCategories.map(cat => ({
+      ...cat,
+      services: cat.services.filter(s => 
+        s.title.toLowerCase().includes(query) || 
+        s.features.some(f => f.toLowerCase().includes(query)) ||
+        cat.category.toLowerCase().includes(query)
+      )
+    })).filter(cat => cat.services.length > 0);
+  }, [searchQuery]);
 
-        <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border-2 border-blue-500 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-4 right-4 bg-blue-600 text-white text-[8px] md:text-[10px] px-2 py-0.5 md:py-1 rounded-full font-black uppercase tracking-tighter">Popular</div>
-          <span className="text-blue-600 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Complete ID</span>
-          <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight text-[#111318]">Brand Complete</h4>
-          <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6 text-[#111318]">$1,499</span>
-          <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
-            {["Full brand identity", "Brand guidelines", "Stationery set", "15 Social media posts", "Email signature"].map((item, i) => (
-              <li key={i} className="text-[11px] md:text-xs font-medium text-gray-600 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" /> {item}
-              </li>
-            ))}
-          </ul>
-          <a href="https://wa.me/212617863598?text=I'm%20interested%20in%20the%20$1,499%20Brand%20Complete%20Bundle" className="w-full py-3 bg-blue-600 text-white text-center rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">Select Bundle</a>
-        </div>
+  const totalResults = filteredData.reduce((acc, cat) => acc + cat.services.length, 0);
 
-        <div className="bg-[#111318] text-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border border-purple-900/50 shadow-2xl group">
-          <span className="text-purple-500 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Mobile Suite</span>
-          <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight">App Launch</h4>
-          <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6">$3,999</span>
-          <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
-            {["App UI/UX design", "App icon design", "App store graphics", "Promo social media posts"].map((item, i) => (
-              <li key={i} className="text-[11px] md:text-xs font-medium text-gray-400 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-purple-600 rounded-full shrink-0" /> {item}
-              </li>
-            ))}
-          </ul>
-          <a href="https://wa.me/212617863598?text=I'm%20interested%20in%20the%20$3,999%20App%20Launch%20Package" className="w-full py-3 bg-purple-600 text-center rounded-xl font-bold text-xs md:text-sm hover:bg-purple-700 transition-colors">Select Bundle</a>
-        </div>
-      </div>
+  return (
+    <section id="pricing" className="px-4 md:px-6 py-12 md:py-24 bg-gray-50 flex justify-center overflow-hidden">
+      <div className="max-w-7xl w-full">
+        <div className="text-center mb-10 md:mb-16 flex flex-col items-center gap-3 md:gap-4">
+          <span className="text-blue-600 font-bold text-[10px] md:text-sm uppercase tracking-[0.2em]">Service Catalog</span>
+          <h2 className="text-[#111318] text-3xl md:text-6xl font-black leading-tight tracking-tight px-4">Transparent Pricing</h2>
+          <p className="text-gray-500 text-sm md:text-lg max-w-xl px-6">World-class design and development services tailored to your budget and ambition.</p>
+          
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm mt-6 md:mt-8">
+            <span className="text-[9px] md:text-xs text-gray-400 font-bold uppercase tracking-widest">Global Secure Checkout via Stripe Integration</span>
+          </div>
 
-      <SectionHeader title="Website Development" subtitle="Scalable, responsive, and conversion-optimized web platforms." />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24">
-        <PricingCard title="Basic Web (3-5pg)" price="300-500" features={["Custom Starter Design", "Essential Mid-Range", "Premium Experience Options"]} />
-        <PricingCard title="Standard Web (6-10pg)" price="500-800" highlight={true} features={["Professional Mid-Range ($800-$1.5k)", "High-End Premium ($1.5k-$3k)", "SEO & Speed Ready"]} />
-        <PricingCard title="Advanced Web (10+pg)" price="1000-1500" features={["Enterprise Solutions", "Advanced Integrations", "Custom Logic & UI"]} />
-        <PricingCard title="Landing Pages" price="100-200" features={["Simple Conversions", "Animated Sale Pages ($200-$400)", "High-Converting Sales ($400-$800)"]} />
-        <PricingCard title="E-commerce Store" price="500-1000" features={["Small Store (1-20 products)", "Medium (20-100 products)", "Large Enterprise (100+ products)"]} />
-        <PricingCard title="Website Redesign" price="200-500" features={["Minor Updates & UI Fixes", "Full Redesign ($500-$2k)", "Complete Overhaul ($2k-$4k+)"]} />
-      </div>
-
-      <SectionHeader title="Performance & Care" subtitle="Keep your site fast, secure, and always online." />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24">
-        <PricingCard title="Website Maintenance" price="50-100" subtitle="/Monthly" features={["Basic Package: Updates & Backups", "Standard: Security + Edits ($100-$200)", "Premium: Priority Support ($200-$400)"]} />
-        <PricingCard title="Speed Optimization" price="100-200" highlight={true} features={["Basic: Quick Wins & Caching", "Advanced: Core Web Vitals ($200-$400)", "Full Performance Audit ($400-$700)"]} />
-        <PricingCard title="Security Hardening" price="150-300" features={["SSL & Firewall Setup", "Malware Scanning & Removal", "Security Audit & Best Practices"]} />
-      </div>
-
-      <SectionHeader title="Branding & Identity" subtitle="We define the visual essence and soul of your brand." />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24">
-        <PricingCard title="Logo Design" price="100-200" features={["Basic concepts (2-3)", "Professional Tier ($200-$500)", "Premium Unlimited ($500-$1k)"]} />
-        <PricingCard title="Brand Identity" price="300-500" highlight={true} features={["Starter Kit (Colors/Fonts)", "Standard Kit (+Patterns)", "Complete Brand System ($1k-$2.5k)"]} />
-        <PricingCard title="Brand Guidelines" price="200-400" features={["Basic (5-10pg)", "Standard (15-25pg)", "Comprehensive 30+pg ($800-$1.5k)"]} />
-        <PricingCard title="Business Cards" price="50-80" features={["Single-sided design", "Double-sided premium", "Special Finishes available"]} />
-        <PricingCard title="Stationery Set" price="150-300" features={["Letterhead & Envelope", "Full Stationery Package", "Corporate Bundle ($300-$600)"]} />
-      </div>
-
-      <SectionHeader title="Marketing & Digital" subtitle="Strategic assets to drive engagement and visual impact." />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24">
-        <PricingCard title="Flyers & Brochures" price="50-100" features={["Single-page flyers", "Bi-fold & Tri-fold options", "Multi-page booklets"]} />
-        <PricingCard title="Social Media Graphics" price="150-300" highlight={true} features={["Pack of 10-30 posts", "Monthly Management available", "Single post options from $20"]} />
-        <PricingCard title="SEO Optimization" price="150-300" features={["Basic on-page SEO setup", "Full SEO strategy ($300-$600)", "Monthly SEO Package ($200-$500/mo)"]} />
-        <PricingCard title="Infographics" price="100-200" features={["Simple data visual", "Complex Detailed Tier", "Animated Infographics ($400-$800)"]} />
-        <PricingCard title="E-book Design" price="150-300" features={["Simple (10-15 pages)", "Standard (20-30 pages) $300-$500", "Premium (40+ pages) $500-$1k"]} />
-        <PricingCard title="Thumbnails" price="15-30" features={["Single high-quality thumbnail", "Pack of 5 ($60-$120)", "Pack of 10 ($100-$200)", "Monthly package ($150-$400)"]} />
-      </div>
-
-      <SectionHeader title="App Development" subtitle="High-performance mobile experiences for iOS and Android." />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24">
-        <PricingCard title="App UI/UX Design" price="500-1000" features={["5-10 simple screens", "Medium (15-25 screens)", "Complex (30+ screens) Tier"]} />
-        <PricingCard title="iOS/Android Build" price="2000-5000" highlight={true} features={["Simple native build", "Medium complexity ($5k-$15k)", "Enterprise Feature-rich ($15k+)"]} />
-        <PricingCard title="Cross-Platform" price="3000-7000" features={["React Native / Flutter", "One codebase, dual OS", "Advanced Scaling available"]} />
-        <PricingCard title="App Maintenance" price="200-500" subtitle="/Monthly" features={["Bug fixes & updates", "Feature updates package", "Priority technical support"]} />
-        <PricingCard title="App Store Assets" price="50-150" features={["App Icon & Feature graphic", "Screenshot set (5)", "Full ASO Package ($250-$500)"]} />
-      </div>
-
-      <div className="mt-8 md:mt-12 bg-white rounded-3xl md:rounded-[2.5rem] p-6 md:p-10 border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-8 md:gap-12 items-center">
-        <div className="flex-1 w-full">
-          <h3 className="text-xl md:text-2xl font-black text-[#111318] mb-6 flex items-center gap-3">
-             <span className="text-yellow-400 text-2xl md:text-3xl">💡</span> Quick Strategy Tips
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-            <div className="p-4 md:p-5 bg-blue-50 rounded-2xl">
-              <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Pick Middle Tiers</span>
-              <p className="text-[11px] md:text-xs text-gray-500 font-medium">Clients usually find the best balance of value and features in our mid-range offerings.</p>
+          {/* Search Bar */}
+          <div className="w-full max-w-2xl mt-10 md:mt-16 px-4">
+            <div className="relative group">
+              <input 
+                type="text" 
+                placeholder="Search for a service (e.g. Logo, App, Maintenance, SEO...)"
+                className="w-full h-14 md:h-16 pl-14 pr-6 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm md:text-base text-[#111318] placeholder-gray-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg>
+              </div>
             </div>
-            <div className="p-4 md:p-5 bg-purple-50 rounded-2xl">
-              <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Leverage Bundles</span>
-              <p className="text-[11px] md:text-xs text-gray-500 font-medium">Bundles offer up to 25% savings compared to ordering services individually.</p>
-            </div>
-            <div className="p-4 md:p-5 bg-green-50 rounded-2xl">
-              <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Retainer Benefits</span>
-              <p className="text-[11px] md:text-xs text-gray-500 font-medium">Long-term partnerships secure lower hourly rates and priority production scheduling.</p>
-            </div>
-            <div className="p-4 md:p-5 bg-pink-50 rounded-2xl">
-              <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Urgent Delivery</span>
-              <p className="text-[11px] md:text-xs text-gray-500 font-medium">Rush fees (+25-50%) ensure your project jumps to the front of our global queue.</p>
-            </div>
+            {searchQuery && (
+              <p className="mt-4 text-xs md:text-sm text-gray-500 font-medium">
+                Showing {totalResults} {totalResults === 1 ? 'result' : 'results'} for "{searchQuery}"
+              </p>
+            )}
           </div>
         </div>
-        <div className="w-full lg:w-1/3 flex flex-col gap-4 md:gap-6 text-center lg:text-left pt-6 lg:pt-0 border-t lg:border-t-0 border-gray-100">
-           <p className="text-gray-500 font-medium text-xs md:text-sm">Need a custom quote for a complex project? Our consultants are available 24/7 via WhatsApp.</p>
-           <a 
-              href="https://wa.me/212617863598"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-14 px-8 bg-[#111318] text-white font-black rounded-xl md:rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg text-sm md:text-base"
-           >
-             Chat with a Designer
-           </a>
+
+        {/* Recommended Bundles (Only show when not searching) */}
+        {!searchQuery && (
+          <>
+            <SectionHeader title="Recommended Bundles" subtitle="Best value for startups and established brands alike." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16 md:mb-24">
+              <div className="bg-[#111318] text-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border border-blue-900/50 shadow-2xl transform hover:scale-[1.02] transition-all">
+                <span className="text-blue-500 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Web Focus</span>
+                <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight">Starter Business</h4>
+                <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6">$599</span>
+                <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
+                  {["5-page custom website", "Mobile responsive", "Basic SEO setup", "Contact form", "1 month support"].map((item, i) => (
+                    <li key={i} className="text-[11px] md:text-xs font-medium text-gray-400 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" /> {item}
+                    </li>
+                  ))}
+                </ul>
+                <a href={`https://wa.me/${CONTACT_WHATSAPP}?text=I'm%20interested%20in%20the%20$599%20Starter%20Business%20Package`} className="w-full py-3 bg-blue-600 text-center rounded-xl font-bold text-xs md:text-sm hover:bg-blue-700 transition-colors">Select Bundle</a>
+              </div>
+              
+              <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border border-gray-200 shadow-xl group hover:border-blue-500 transition-all">
+                <span className="text-blue-600 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Brand Launch</span>
+                <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight text-[#111318]">Business Starter</h4>
+                <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6 text-[#111318]">$499</span>
+                <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
+                  {["Logo design", "Business card", "Letterhead", "Social media kit (5 templates)"].map((item, i) => (
+                    <li key={i} className="text-[11px] md:text-xs font-medium text-gray-600 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" /> {item}
+                    </li>
+                  ))}
+                </ul>
+                <a href={`https://wa.me/${CONTACT_WHATSAPP}?text=I'm%20interested%20in%20the%20$499%20Business%20Starter%20Bundle`} className="w-full py-3 bg-gray-100 text-center rounded-xl font-bold text-xs md:text-sm text-[#111318] group-hover:bg-blue-600 group-hover:text-white transition-all">Select Bundle</a>
+              </div>
+
+              <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border-2 border-blue-500 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-4 right-4 bg-blue-600 text-white text-[8px] md:text-[10px] px-2 py-0.5 md:py-1 rounded-full font-black uppercase tracking-tighter">Popular</div>
+                <span className="text-blue-600 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Complete ID</span>
+                <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight text-[#111318]">Brand Complete</h4>
+                <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6 text-[#111318]">$1,499</span>
+                <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
+                  {["Full brand identity", "Brand guidelines", "Stationery set", "15 Social media posts", "Email signature"].map((item, i) => (
+                    <li key={i} className="text-[11px] md:text-xs font-medium text-gray-600 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" /> {item}
+                    </li>
+                  ))}
+                </ul>
+                <a href={`https://wa.me/${CONTACT_WHATSAPP}?text=I'm%20interested%20in%20the%20$1,499%20Brand%20Complete%20Bundle`} className="w-full py-3 bg-blue-600 text-white text-center rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">Select Bundle</a>
+              </div>
+
+              <div className="bg-[#111318] text-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] flex flex-col border border-purple-900/50 shadow-2xl group">
+                <span className="text-purple-500 font-black text-[10px] md:text-xs uppercase tracking-widest mb-2">Mobile Suite</span>
+                <h4 className="text-xl md:text-2xl font-black mb-1 leading-tight">App Launch</h4>
+                <span className="text-3xl md:text-4xl font-black mb-4 md:mb-6">$3,999</span>
+                <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-grow">
+                  {["App UI/UX design", "App icon design", "App store graphics", "Promo social media posts"].map((item, i) => (
+                    <li key={i} className="text-[11px] md:text-xs font-medium text-gray-400 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-purple-600 rounded-full shrink-0" /> {item}
+                    </li>
+                  ))}
+                </ul>
+                <a href={`https://wa.me/${CONTACT_WHATSAPP}?text=I'm%20interested%20in%20the%20$3,999%20App%20Launch%20Package`} className="w-full py-3 bg-purple-600 text-center rounded-xl font-bold text-sm hover:bg-purple-700 transition-colors">Select Bundle</a>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Categories and Services */}
+        {filteredData.length > 0 ? (
+          filteredData.map((cat, idx) => (
+            <React.Fragment key={idx}>
+              <SectionHeader title={cat.category} subtitle={cat.subtitle} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24">
+                {cat.services.map((service, sIdx) => (
+                  <PricingCard 
+                    key={sIdx} 
+                    title={service.title} 
+                    price={service.price} 
+                    highlight={service.highlight} 
+                    features={service.features} 
+                    subtitle={service.customSubtitle}
+                  />
+                ))}
+              </div>
+            </React.Fragment>
+          ))
+        ) : (
+          <div className="py-20 text-center">
+            <div className="text-6xl mb-6">🔍</div>
+            <h3 className="text-2xl font-black text-[#111318] mb-2">No matching services found</h3>
+            <p className="text-gray-500">Try searching for something else or browse our full catalog.</p>
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="mt-8 text-blue-600 font-black hover:underline"
+            >
+              Clear search query
+            </button>
+          </div>
+        )}
+
+        {/* Tip Section */}
+        <div className="mt-8 md:mt-12 bg-white rounded-3xl md:rounded-[2.5rem] p-6 md:p-10 border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-8 md:gap-12 items-center">
+          <div className="flex-1 w-full">
+            <h3 className="text-xl md:text-2xl font-black text-[#111318] mb-6 flex items-center gap-3">
+               <span className="text-yellow-400 text-2xl md:text-3xl">💡</span> Quick Strategy Tips
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+              <div className="p-4 md:p-5 bg-blue-50 rounded-2xl">
+                <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Pick Middle Tiers</span>
+                <p className="text-[11px] md:text-xs text-gray-500 font-medium">Clients usually find the best balance of value and features in our mid-range offerings.</p>
+              </div>
+              <div className="p-4 md:p-5 bg-purple-50 rounded-2xl">
+                <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Leverage Bundles</span>
+                <p className="text-[11px] md:text-xs text-gray-500 font-medium">Bundles offer up to 25% savings compared to ordering services individually.</p>
+              </div>
+              <div className="p-4 md:p-5 bg-green-50 rounded-2xl">
+                <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Retainer Benefits</span>
+                <p className="text-[11px] md:text-xs text-gray-500 font-medium">Long-term partnerships secure lower hourly rates and priority production scheduling.</p>
+              </div>
+              <div className="p-4 md:p-5 bg-pink-50 rounded-2xl">
+                <span className="font-black text-[#111318] block mb-1 text-sm md:text-base">Urgent Delivery</span>
+                <p className="text-[11px] md:text-xs text-gray-500 font-medium">Rush fees (+25-50%) ensure your project jumps to the front of our global queue.</p>
+              </div>
+            </div>
+          </div>
+          <div className="w-full lg:w-1/3 flex flex-col gap-4 md:gap-6 text-center lg:text-left pt-6 lg:pt-0 border-t lg:border-t-0 border-gray-100">
+             <p className="text-gray-500 font-medium text-xs md:text-sm">Need a custom quote for a complex project? Our consultants are available 24/7 via WhatsApp.</p>
+             <a 
+                href={`https://wa.me/${CONTACT_WHATSAPP}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-14 px-8 bg-[#111318] text-white font-black rounded-xl md:rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg text-sm md:text-base"
+             >
+               Chat with a Designer
+             </a>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const Testimonials = () => (
   <section className="px-4 md:px-6 py-12 md:py-24 bg-white flex justify-center overflow-hidden">
@@ -464,7 +570,7 @@ const Footer = ({ setView }: { setView: (v: View) => void }) => {
             <ul className="flex flex-col items-center sm:items-start gap-3 md:gap-4">
               <li><button onClick={() => setView('home')} className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Services</button></li>
               <li><button onClick={() => setView('process')} className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Our Process</button></li>
-              <li><a href="https://wa.me/212617863598" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Contact Us</a></li>
+              <li><a href={`https://wa.me/${CONTACT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 text-xs md:text-sm font-medium transition-colors">Contact Us</a></li>
             </ul>
           </div>
 
