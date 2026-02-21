@@ -1,1 +1,5 @@
-Permission denied
+{
+  "description": "ACLLC",
+  "requestFramePermissions": [],
+  "name": "ACLLC"
+}
