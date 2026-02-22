@@ -1,1 +1,4 @@
-Permission denied
+User-agent: *
+Allow: /
+
+Sitemap: https://acllc.studio/sitemap.xml
