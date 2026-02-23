@@ -13,8 +13,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const app = express();
+
 async function startServer() {
-  const app = express();
   const PORT = 3000;
 
   app.use(cors());
@@ -27,15 +28,25 @@ async function startServer() {
 
   app.post("/api/create-checkout-session", async (req: Request, res: Response) => {
     console.log("Checkout request received:", req.body);
+    
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY is not configured");
+      return res.status(500).json({ error: "Stripe API key is not configured in environment variables." });
+    }
+
     try {
       const { title, price, subtitle } = req.body;
       
+      if (!title || !price) {
+        return res.status(400).json({ error: "Title and price are required." });
+      }
+
       // Extract numeric price. If it's a range like "300-500", take the first number.
-      const firstPart = price.split('-')[0];
+      const firstPart = String(price).split('-')[0];
       const numericPrice = parseInt(firstPart.replace(/[^0-9]/g, ""), 10);
       
       if (isNaN(numericPrice)) {
-        return res.status(400).json({ error: "Invalid price format" });
+        return res.status(400).json({ error: `Invalid price format: ${price}` });
       }
 
       const session = await stripe.checkout.sessions.create({
@@ -58,10 +69,10 @@ async function startServer() {
         cancel_url: `${process.env.APP_URL || `http://localhost:${PORT}`}/?canceled=true`,
       });
 
-      res.json({ url: session.url });
+      return res.json({ url: session.url });
     } catch (error: any) {
-      console.error("Stripe Error:", error);
-      res.status(500).json({ error: error.message });
+      console.error("Stripe Session Error:", error);
+      return res.status(500).json({ error: error.message || "Failed to create checkout session" });
     }
   });
 
@@ -135,24 +146,28 @@ I recommend our Standard Web package to start: [PAY: Standard Web - $800]. Shall
     }
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    // Serve static files in production
+  } else if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
+    // Serve static files in production (only if not on Vercel, as Vercel handles static files)
     app.use(express.static(path.join(__dirname, "dist")));
     app.get("*", (req: Request, res: Response) => {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  // Only listen if not running as a Vercel function
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer();
+
+export default app;

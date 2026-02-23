@@ -124,15 +124,23 @@ const handleCheckout = async (title: string, price: string, subtitle: string, se
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, price, subtitle }),
     });
+    
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response received:", text);
+      throw new Error("Server returned an invalid response. Please check if the server is running correctly.");
+    }
+
     const data = await response.json();
-    if (data.url) {
+    if (response.ok && data.url) {
       window.location.href = data.url;
     } else {
       throw new Error(data.error || 'Failed to create checkout session');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Checkout Error:', error);
-    alert('Payment system is currently unavailable. Please contact us via WhatsApp for manual booking.');
+    alert(`Checkout Error: ${error.message || 'Payment system is currently unavailable.'}\n\nPlease contact us via WhatsApp if this persists.`);
   } finally {
     setLoading(false);
   }
