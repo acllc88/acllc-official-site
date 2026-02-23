@@ -19,7 +19,9 @@ import {
   Palette,
   Smartphone,
   BarChart3,
-  FileText
+  FileText,
+  Loader2,
+  CreditCard
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -114,6 +116,28 @@ const testimonials = [
 
 // --- Components ---
 
+const handleCheckout = async (title: string, price: string, subtitle: string, setLoading: (l: boolean) => void) => {
+  setLoading(true);
+  try {
+    const response = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, price, subtitle }),
+    });
+    const data = await response.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Failed to create checkout session');
+    }
+  } catch (error) {
+    console.error('Checkout Error:', error);
+    alert('Payment system is currently unavailable. Please contact us via WhatsApp for manual booking.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 const Logo = () => (
   <motion.div 
     whileHover={{ scale: 1.05 }}
@@ -173,7 +197,7 @@ const Header = ({ setView }: { setView: (v: View) => void }) => {
             href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-brand-black text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-brand-accent transition-all shadow-xl shadow-black/10 hover:shadow-brand-accent/20 active:scale-95"
+            className="bg-brand-black text-white px-6 lg:px-8 py-2.5 lg:py-3 rounded-full text-xs lg:text-sm font-bold hover:bg-brand-accent transition-all shadow-xl shadow-black/10 hover:shadow-brand-accent/20 active:scale-95"
           >
             Get Started
           </a>
@@ -253,12 +277,12 @@ const Hero = ({ setView }: { setView: (v: View) => void }) => (
           We transform ambitious ideas into high-performance digital experiences. From conversion-focused UI/UX to scalable enterprise platforms.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+        <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center">
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setView('process')}
-            className="group h-16 px-10 bg-brand-black text-white font-bold rounded-full shadow-2xl shadow-black/20 transition-all flex items-center gap-3 text-lg"
+            className="group w-full sm:w-auto h-14 md:h-16 px-8 md:px-10 bg-brand-black text-white font-bold rounded-full shadow-2xl shadow-black/20 transition-all flex items-center justify-center gap-3 text-base md:text-lg"
           >
             Explore Our Process
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -270,7 +294,7 @@ const Hero = ({ setView }: { setView: (v: View) => void }) => (
             href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="h-16 px-10 bg-brand-accent text-white font-bold rounded-full shadow-xl shadow-brand-accent/20 transition-all flex items-center justify-center text-lg hover:bg-brand-black"
+            className="w-full sm:w-auto h-14 md:h-16 px-8 md:px-10 bg-brand-accent text-white font-bold rounded-full shadow-xl shadow-brand-accent/20 transition-all flex items-center justify-center text-base md:text-lg hover:bg-brand-black"
           >
             Book a Consultation
           </motion.a>
@@ -300,6 +324,7 @@ const Hero = ({ setView }: { setView: (v: View) => void }) => (
 );
 
 const PricingCard = ({ title, price, features, highlight = false, subtitle = "" }: any) => {
+  const [loading, setLoading] = useState(false);
   const message = encodeURIComponent(`Hello ACLLC, I'm interested in the ${title} service. I'd like to get started!`);
   const whatsappUrl = `https://wa.me/${CONTACT_WHATSAPP}?text=${message}`;
 
@@ -339,22 +364,31 @@ const PricingCard = ({ title, price, features, highlight = false, subtitle = "" 
         ))}
       </div>
       
-      <motion.a 
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(
-          "w-full py-5 rounded-2xl font-bold transition-all text-center text-sm flex items-center justify-center gap-2",
-          highlight 
-            ? "bg-brand-black text-white hover:bg-brand-accent" 
-            : "bg-brand-black/5 text-brand-black hover:bg-brand-black hover:text-white"
-        )}
-      >
-        Select {title}
-        <ArrowRight size={16} />
-      </motion.a>
+      <div className="flex flex-col gap-3">
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleCheckout(title, price, subtitle, setLoading)}
+          disabled={loading}
+          className={cn(
+            "w-full py-4 md:py-5 rounded-2xl font-bold transition-all text-center text-sm md:text-base flex items-center justify-center gap-2",
+            highlight 
+              ? "bg-brand-black text-white hover:bg-brand-accent" 
+              : "bg-brand-black/5 text-brand-black hover:bg-brand-black hover:text-white"
+          )}
+        >
+          {loading ? <Loader2 className="animate-spin" size={20} /> : <>Pay Securely <ArrowRight size={16} /></>}
+        </motion.button>
+        
+        <a 
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-center text-[10px] font-bold text-brand-black/30 hover:text-brand-accent transition-colors uppercase tracking-widest"
+        >
+          Or discuss on WhatsApp
+        </a>
+      </div>
     </motion.div>
   );
 };
@@ -371,6 +405,66 @@ const SectionHeader = ({ title, subtitle }: { title: string, subtitle?: string }
     {subtitle && <p className="text-brand-black/40 text-center text-sm md:text-lg font-medium max-w-2xl mx-auto text-balance px-4">{subtitle}</p>}
   </div>
 );
+
+const ConsultationButton = () => {
+  const [loading, setLoading] = useState(false);
+  return (
+    <motion.button 
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => handleCheckout("Strategic Consultation", "100", "Expert Strategy Session", setLoading)}
+      disabled={loading}
+      className="w-full h-14 md:h-16 bg-brand-accent text-white font-bold rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-xl shadow-brand-accent/20 text-base md:text-lg gap-3"
+    >
+      {loading ? <Loader2 className="animate-spin" size={24} /> : <>Consult an Expert <ArrowRight size={20} /></>}
+    </motion.button>
+  );
+};
+
+const BundleCard = ({ bundle }: { bundle: any }) => {
+  const [loading, setLoading] = useState(false);
+  
+  return (
+    <motion.div 
+      whileHover={{ y: -10 }}
+      className={cn(
+        "relative p-10 rounded-[3rem] flex flex-col border transition-all duration-500",
+        bundle.color === "bg-brand-black" ? "bg-brand-black text-white border-white/5" : "bg-white text-brand-black border-black/5 shadow-xl shadow-black/[0.02]",
+        bundle.popular && "ring-2 ring-brand-accent"
+      )}
+    >
+      {bundle.popular && (
+        <div className="absolute top-4 right-4 md:top-6 md:right-6 bg-brand-accent text-white text-[8px] md:text-[10px] px-2 md:px-3 py-1 rounded-full font-black uppercase tracking-widest shadow-lg shadow-brand-accent/20">
+          Popular
+        </div>
+      )}
+      <span className={cn("font-black text-[10px] uppercase tracking-[0.3em] mb-4", bundle.accent)}>{bundle.tag}</span>
+      <h4 className="text-2xl font-black mb-2 tracking-tight">{bundle.title}</h4>
+      <div className="flex items-baseline gap-1 mb-8">
+        <span className="text-4xl font-black tracking-tighter">${bundle.price}</span>
+      </div>
+      <ul className="space-y-4 mb-10 flex-grow">
+        {bundle.features.map((item: string, j: number) => (
+          <li key={j} className={cn("text-xs font-semibold flex items-start gap-3", bundle.color === "bg-brand-black" ? "text-white/50" : "text-brand-black/50")}>
+            <div className={cn("w-1.5 h-1.5 rounded-full shrink-0 mt-1.5", bundle.accent.replace('text-', 'bg-'))} /> {item}
+          </li>
+        ))}
+      </ul>
+      <motion.button 
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => handleCheckout(bundle.title, bundle.price, bundle.tag, setLoading)}
+        disabled={loading}
+        className={cn(
+          "w-full py-3.5 md:py-4 text-center rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2",
+          bundle.color === "bg-brand-black" ? "bg-brand-accent text-white hover:bg-blue-600" : "bg-brand-black text-white hover:bg-brand-accent"
+        )}
+      >
+        {loading ? <Loader2 className="animate-spin" size={20} /> : <>Select Bundle <ArrowRight size={16} /></>}
+      </motion.button>
+    </motion.div>
+  );
+};
 
 const Pricing = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -475,42 +569,7 @@ const Pricing = () => {
                   features: ["App UI/UX design", "App icon design", "App store graphics", "Promo social media posts"]
                 }
               ].map((bundle, i) => (
-                <motion.div 
-                  key={i}
-                  whileHover={{ y: -10 }}
-                  className={cn(
-                    "relative p-10 rounded-[3rem] flex flex-col border transition-all duration-500",
-                    bundle.color === "bg-brand-black" ? "bg-brand-black text-white border-white/5" : "bg-white text-brand-black border-black/5 shadow-xl shadow-black/[0.02]",
-                    bundle.popular && "ring-2 ring-brand-accent"
-                  )}
-                >
-                  {bundle.popular && (
-                    <div className="absolute top-4 right-4 md:top-6 md:right-6 bg-brand-accent text-white text-[8px] md:text-[10px] px-2 md:px-3 py-1 rounded-full font-black uppercase tracking-widest shadow-lg shadow-brand-accent/20">
-                      Popular
-                    </div>
-                  )}
-                  <span className={cn("font-black text-[10px] uppercase tracking-[0.3em] mb-4", bundle.accent)}>{bundle.tag}</span>
-                  <h4 className="text-2xl font-black mb-2 tracking-tight">{bundle.title}</h4>
-                  <div className="flex items-baseline gap-1 mb-8">
-                    <span className="text-4xl font-black tracking-tighter">${bundle.price}</span>
-                  </div>
-                  <ul className="space-y-4 mb-10 flex-grow">
-                    {bundle.features.map((item, j) => (
-                      <li key={j} className={cn("text-xs font-semibold flex items-start gap-3", bundle.color === "bg-brand-black" ? "text-white/50" : "text-brand-black/50")}>
-                        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0 mt-1.5", bundle.accent.replace('text-', 'bg-'))} /> {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <a 
-                    href={`https://wa.me/${CONTACT_WHATSAPP}?text=I'm%20interested%20in%20the%20$${bundle.price}%20${bundle.title}%20Package`} 
-                    className={cn(
-                      "w-full py-4 text-center rounded-2xl font-bold text-sm transition-all",
-                      bundle.color === "bg-brand-black" ? "bg-brand-accent text-white hover:bg-blue-600" : "bg-brand-black text-white hover:bg-brand-accent"
-                    )}
-                  >
-                    Select Bundle
-                  </a>
-                </motion.div>
+                <BundleCard key={i} bundle={bundle} />
               ))}
             </div>
           </div>
@@ -550,7 +609,7 @@ const Pricing = () => {
               <p className="text-brand-black/40 text-lg mb-10">Try adjusting your search terms or browse our full catalog.</p>
               <button 
                 onClick={() => setSearchQuery('')}
-                className="px-8 py-4 bg-brand-black text-white font-bold rounded-full hover:bg-brand-accent transition-all"
+                className="px-6 md:px-8 py-3 md:py-4 bg-brand-black text-white font-bold rounded-full hover:bg-brand-accent transition-all text-sm md:text-base"
               >
                 View All Services
               </button>
@@ -591,19 +650,11 @@ const Pricing = () => {
             </div>
             
             <div className="w-full lg:w-1/3 flex flex-col gap-8">
-              <div className="p-8 bg-white/5 rounded-[2.5rem] border border-white/10 backdrop-blur-xl">
-                <p className="text-white/70 font-medium text-lg mb-8 leading-relaxed">
+              <div className="p-6 md:p-8 bg-white/5 rounded-[2rem] md:rounded-[2.5rem] border border-white/10 backdrop-blur-xl">
+                <p className="text-white/70 font-medium text-base md:text-lg mb-6 md:mb-8 leading-relaxed">
                   Need a custom solution for a complex enterprise project?
                 </p>
-                <a 
-                  href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full h-16 bg-brand-accent text-white font-bold rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-xl shadow-brand-accent/20 text-lg gap-3"
-                >
-                  Consult an Expert
-                  <ArrowRight size={20} />
-                </a>
+                <ConsultationButton />
               </div>
             </div>
           </div>
@@ -656,84 +707,89 @@ const Testimonials = () => (
   </section>
 );
 
-const ProcessPage = ({ handleViewChange }: { handleViewChange: (v: View) => void }) => (
-  <section className="px-6 py-24 md:py-32 bg-white min-h-screen flex flex-col items-center">
-    <div className="max-w-6xl w-full">
-      <div className="text-center mb-16 md:mb-24 flex flex-col items-center">
-        <motion.span 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-brand-accent font-black text-[10px] md:text-xs uppercase tracking-[0.4em] mb-4 md:mb-6"
-        >
-          Our Methodology
-        </motion.span>
-        <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-brand-black tracking-tighter mb-6 md:mb-8">
-          The <span className="italic font-serif font-normal">Creative</span> Journey
-        </h1>
-        <p className="text-brand-black/50 text-base md:text-2xl max-w-3xl text-balance px-4">
-          A structured, 6-step process engineered to transform your vision into a market-leading digital presence.
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 mb-20 md:mb-32">
-        {[
-          { step: "01", title: "Discovery", desc: "We dive deep into your vision, market positioning, and business goals to build a strategic foundation.", icon: <Search size={24} /> },
-          { step: "02", title: "Strategy", desc: "Crafting the blueprint, user flows, and technical requirements for your digital presence.", icon: <BarChart3 size={24} /> },
-          { step: "03", title: "Design", desc: "High-fidelity visual design where your brand's unique identity comes to life.", icon: <Palette size={24} /> },
-          { step: "04", title: "Develop", desc: "Building responsive, high-performance digital products with modern web technologies.", icon: <Cpu size={24} /> },
-          { step: "05", title: "Refine", desc: "Rigorous testing and client collaboration to ensure every pixel and interaction is perfect.", icon: <Shield size={24} /> },
-          { step: "06", title: "Launch", desc: "Deployment and ongoing optimization to ensure your brand thrives in the digital landscape.", icon: <Globe size={24} /> }
-        ].map((item, idx) => (
-          <motion.div 
-            key={idx}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: idx * 0.1 }}
-            className="group p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] bg-gray-50/50 border border-black/[0.03] hover:bg-white hover:shadow-2xl hover:shadow-black/[0.05] transition-all duration-500"
+const ProcessPage = ({ handleViewChange }: { handleViewChange: (v: View) => void }) => {
+  const [loading, setLoading] = useState(false);
+  
+  return (
+    <section className="px-6 py-24 md:py-32 bg-white min-h-screen flex flex-col items-center">
+      <div className="max-w-6xl w-full">
+        <div className="text-center mb-16 md:mb-24 flex flex-col items-center">
+          <motion.span 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-brand-accent font-black text-[10px] md:text-xs uppercase tracking-[0.4em] mb-4 md:mb-6"
           >
-            <div className="flex items-center justify-between mb-6 md:mb-8">
-              <div className="size-14 md:size-16 rounded-2xl bg-brand-black text-white flex items-center justify-center shadow-xl shadow-black/10 group-hover:bg-brand-accent transition-colors">
-                {item.icon}
-              </div>
-              <span className="text-3xl md:text-4xl font-black text-brand-black/5 tracking-tighter">{item.step}</span>
-            </div>
-            <h3 className="text-xl md:text-2xl font-black text-brand-black mb-3 md:mb-4 tracking-tight">{item.title}</h3>
-            <p className="text-brand-black/50 text-sm md:text-base leading-relaxed">{item.desc}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        className="bg-brand-black rounded-[2.5rem] md:rounded-[4rem] p-10 md:p-24 text-center text-white relative overflow-hidden"
-      >
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-accent/20 to-transparent pointer-events-none" />
-        <h2 className="text-3xl md:text-6xl font-black mb-6 md:mb-8 relative z-10">Ready to start your journey?</h2>
-        <p className="text-white/50 text-base md:text-xl max-w-2xl mx-auto mb-10 md:mb-12 relative z-10 px-4">
-          Join hundreds of successful brands and experience our expert process firsthand.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center relative z-10">
-           <a 
-              href={`https://wa.me/${CONTACT_WHATSAPP}?text=${DEFAULT_CONTACT_MESSAGE}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto h-14 md:h-16 px-10 md:px-12 bg-brand-accent text-white font-bold rounded-full flex items-center justify-center hover:bg-blue-600 transition-all shadow-2xl shadow-brand-accent/20 text-base md:text-lg"
-           >
-             Start Your Project
-           </a>
-           <button 
-              onClick={() => handleViewChange('home')}
-              className="w-full sm:w-auto h-14 md:h-16 px-10 md:px-12 bg-white text-brand-black font-bold rounded-full border border-white/10 flex items-center justify-center hover:bg-gray-100 transition-all text-base md:text-lg"
-           >
-             Back to Home
-           </button>
+            Our Methodology
+          </motion.span>
+          <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-brand-black tracking-tighter mb-6 md:mb-8">
+            The <span className="italic font-serif font-normal">Creative</span> Journey
+          </h1>
+          <p className="text-brand-black/50 text-base md:text-2xl max-w-3xl text-balance px-4">
+            A structured, 6-step process engineered to transform your vision into a market-leading digital presence.
+          </p>
         </div>
-      </motion.div>
-    </div>
-  </section>
-);
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 mb-20 md:mb-32">
+          {[
+            { step: "01", title: "Discovery", desc: "We dive deep into your vision, market positioning, and business goals to build a strategic foundation.", icon: <Search size={24} /> },
+            { step: "02", title: "Strategy", desc: "Crafting the blueprint, user flows, and technical requirements for your digital presence.", icon: <BarChart3 size={24} /> },
+            { step: "03", title: "Design", desc: "High-fidelity visual design where your brand's unique identity comes to life.", icon: <Palette size={24} /> },
+            { step: "04", title: "Develop", desc: "Building responsive, high-performance digital products with modern web technologies.", icon: <Cpu size={24} /> },
+            { step: "05", title: "Refine", desc: "Rigorous testing and client collaboration to ensure every pixel and interaction is perfect.", icon: <Shield size={24} /> },
+            { step: "06", title: "Launch", desc: "Deployment and ongoing optimization to ensure your brand thrives in the digital landscape.", icon: <Globe size={24} /> }
+          ].map((item, idx) => (
+            <motion.div 
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              className="group p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] bg-gray-50/50 border border-black/[0.03] hover:bg-white hover:shadow-2xl hover:shadow-black/[0.05] transition-all duration-500"
+            >
+              <div className="flex items-center justify-between mb-6 md:mb-8">
+                <div className="size-14 md:size-16 rounded-2xl bg-brand-black text-white flex items-center justify-center shadow-xl shadow-black/10 group-hover:bg-brand-accent transition-colors">
+                  {item.icon}
+                </div>
+                <span className="text-3xl md:text-4xl font-black text-brand-black/5 tracking-tighter">{item.step}</span>
+              </div>
+              <h3 className="text-xl md:text-2xl font-black text-brand-black mb-3 md:mb-4 tracking-tight">{item.title}</h3>
+              <p className="text-brand-black/50 text-sm md:text-base leading-relaxed">{item.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          className="bg-brand-black rounded-[2.5rem] md:rounded-[4rem] p-10 md:p-24 text-center text-white relative overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-accent/20 to-transparent pointer-events-none" />
+          <h2 className="text-3xl md:text-6xl font-black mb-6 md:mb-8 relative z-10">Ready to start your journey?</h2>
+          <p className="text-white/50 text-base md:text-xl max-w-2xl mx-auto mb-10 md:mb-12 relative z-10 px-4">
+            Join hundreds of successful brands and experience our expert process firsthand.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center relative z-10">
+             <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleCheckout("Project Deposit", "500", "Initial Project Retainer", setLoading)}
+                disabled={loading}
+                className="w-full sm:w-auto h-14 md:h-16 px-10 md:px-12 bg-brand-accent text-white font-bold rounded-full flex items-center justify-center hover:bg-blue-600 transition-all shadow-2xl shadow-brand-accent/20 text-base md:text-lg gap-2"
+             >
+               {loading ? <Loader2 className="animate-spin" size={24} /> : <>Start Your Project <ArrowRight size={20} /></>}
+             </motion.button>
+             <button 
+                onClick={() => handleViewChange('home')}
+                className="w-full sm:w-auto h-14 md:h-16 px-10 md:px-12 bg-white text-brand-black font-bold rounded-full border border-white/10 flex items-center justify-center hover:bg-gray-100 transition-all text-base md:text-lg"
+             >
+               Back to Home
+             </button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 const PrivacyPage = () => (
   <section className="px-6 py-20 md:py-32 bg-white flex justify-center min-h-screen">
@@ -873,8 +929,267 @@ const Footer = ({ setView }: { setView: (v: View) => void }) => {
   );
 };
 
+const ChatMessage = ({ msg, onCheckout }: { msg: { role: 'user' | 'assistant', content: string }, onCheckout: (title: string, price: string) => void }) => {
+  const content = msg.content;
+  const payRegex = /\[PAY:\s*([^\]-]+)\s*-\s*\$([0-9,]+)\]/g;
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = payRegex.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(content.substring(lastIndex, match.index));
+    }
+    
+    const title = match[1].trim();
+    const price = match[2].trim();
+    
+    parts.push(
+      <button
+        key={match.index}
+        onClick={() => onCheckout(title, price)}
+        className="my-2 flex items-center gap-2 bg-brand-black text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-brand-accent transition-all shadow-lg shadow-black/10 active:scale-95"
+      >
+        <CreditCard size={14} />
+        Pay for {title} (${price})
+      </button>
+    );
+    
+    lastIndex = payRegex.lastIndex;
+  }
+
+  if (lastIndex < content.length) {
+    parts.push(content.substring(lastIndex));
+  }
+
+  return (
+    <div className={cn(
+      "max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap",
+      msg.role === 'user' 
+        ? "bg-brand-accent text-white self-end rounded-tr-none" 
+        : "bg-gray-100 text-brand-black self-start rounded-tl-none font-medium"
+    )}>
+      {parts.length > 0 ? parts : content}
+    </div>
+  );
+};
+
+const ChatAgent = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
+    { role: 'assistant', content: "Hello! I am ACLLC Support, your Senior Strategist. We have 2 production slots remaining for this month. To secure yours, are you looking to launch a new brand or scale an existing digital product? 🚀" }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentAgent, setCurrentAgent] = useState<{ name: string, icon: React.ReactNode }>({ name: 'ACLLC Support', icon: <MessageCircle size={20} className="text-white" /> });
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Parse agent from content
+  const updateAgentFromContent = (content: string) => {
+    const agentMap: Record<string, { name: string, icon: React.ReactNode }> = {
+      'Alex': { name: 'Alex (Web)', icon: <Globe size={20} className="text-white" /> },
+      'Leo': { name: 'Leo (Performance)', icon: <Zap size={20} className="text-white" /> },
+      'Maya': { name: 'Maya (Branding)', icon: <Palette size={20} className="text-white" /> },
+      'Sam': { name: 'Sam (Marketing)', icon: <BarChart3 size={20} className="text-white" /> },
+      'Jordan': { name: 'Jordan (Apps)', icon: <Smartphone size={20} className="text-white" /> },
+      'ACLLC Support': { name: 'ACLLC Support', icon: <MessageCircle size={20} className="text-white" /> }
+    };
+
+    for (const name in agentMap) {
+      if (content.includes(`I am ${name}`)) {
+        setCurrentAgent(agentMap[name]);
+        break;
+      }
+    }
+  };
+
+  // Sound effect (base64 for a subtle "pop" sound)
+  const playSound = () => {
+    try {
+      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
+      audio.volume = 0.4;
+      audio.play().catch(e => console.log("Audio play blocked by browser policy"));
+    } catch (e) {
+      console.error("Error playing sound", e);
+    }
+  };
+
+  const requestNotificationPermission = () => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  };
+
+  const sendNotification = (text: string) => {
+    if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+      new Notification("ACLLC Support", {
+        body: text,
+        icon: "https://i.postimg.cc/SnMm1Rz9/Web-Logo.png"
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (isOpen) {
+      requestNotificationPermission();
+    }
+  }, [isOpen]);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = { role: 'user' as const, content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...messages, userMessage] }),
+      });
+
+      const data = await response.json();
+      if (data.choices && data.choices[0]) {
+        const assistantContent = data.choices[0].message.content;
+        setMessages(prev => [...prev, { role: 'assistant', content: assistantContent }]);
+        updateAgentFromContent(assistantContent);
+        playSound();
+        sendNotification(assistantContent);
+      }
+    } catch (error) {
+      console.error('Chat Error:', error);
+      setMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, I'm having trouble connecting right now. Please try again or contact us via WhatsApp! 📱" }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[200]">
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-[350px] md:w-[400px] h-[500px] max-h-[calc(100vh-120px)] bg-white rounded-[2rem] shadow-2xl border border-black/5 flex flex-col overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-brand-black p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-brand-accent flex items-center justify-center">
+                  {currentAgent.icon}
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-sm tracking-tight">{currentAgent.name}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Online</span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div ref={scrollRef} className="flex-grow overflow-y-auto p-6 flex flex-col gap-4 scroll-smooth">
+              {messages.map((msg, i) => (
+                <ChatMessage 
+                  key={i} 
+                  msg={msg} 
+                  onCheckout={(title, price) => handleCheckout(title, price, "Chat Recommendation", setIsLoading)} 
+                />
+              ))}
+              {isLoading && (
+                <div className="bg-gray-100 text-brand-black self-start p-4 rounded-2xl rounded-tl-none flex gap-1">
+                  <div className="size-1.5 rounded-full bg-brand-black/20 animate-bounce" />
+                  <div className="size-1.5 rounded-full bg-brand-black/20 animate-bounce [animation-delay:0.2s]" />
+                  <div className="size-1.5 rounded-full bg-brand-black/20 animate-bounce [animation-delay:0.4s]" />
+                </div>
+              )}
+            </div>
+
+            {/* Input */}
+            <div className="p-6 border-t border-black/5">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Ask about our services..."
+                  className="w-full h-12 pl-4 pr-12 bg-gray-50 border border-black/5 rounded-xl focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent/20 transition-all text-sm font-medium"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                />
+                <button 
+                  onClick={handleSend}
+                  disabled={isLoading || !input.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 size-8 bg-brand-black text-white rounded-lg flex items-center justify-center hover:bg-brand-accent transition-all disabled:opacity-50"
+                >
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className="size-14 md:size-16 bg-brand-black text-white rounded-full shadow-2xl shadow-black/20 flex items-center justify-center hover:bg-brand-accent transition-all relative group"
+      >
+        <AnimatePresence mode="wait">
+          {isOpen ? (
+            <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+              <X size={24} />
+            </motion.div>
+          ) : (
+            <motion.div key="chat" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+              <MessageCircle size={24} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {!isOpen && (
+          <span className="absolute -top-1 -right-1 size-4 bg-brand-accent rounded-full border-2 border-white animate-pulse" />
+        )}
+      </motion.button>
+    </div>
+  );
+};
+
 const App = () => {
   const [view, setView] = useState<View>('home');
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success')) {
+      setNotification({ type: 'success', message: 'Payment successful! Our team will contact you shortly.' });
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('canceled')) {
+      setNotification({ type: 'error', message: 'Payment was canceled. Feel free to try again when you are ready.' });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
     let title = "";
@@ -978,6 +1293,23 @@ const App = () => {
 
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col bg-brand-white overflow-x-hidden font-sans selection:bg-brand-accent selection:text-white">
+      <AnimatePresence>
+        {notification && (
+          <motion.div 
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            className={cn(
+              "fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-4 rounded-2xl shadow-2xl font-bold text-sm flex items-center gap-3 min-w-[300px]",
+              notification.type === 'success' ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+            )}
+          >
+            {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       <Header setView={handleViewChange} />
       <main className="flex-grow">
         <AnimatePresence mode="wait">
@@ -993,6 +1325,7 @@ const App = () => {
         </AnimatePresence>
       </main>
       <Footer setView={handleViewChange} />
+      <ChatAgent />
     </div>
   );
 };
